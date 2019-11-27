@@ -44,20 +44,32 @@ const serverHandle = (req, res) => {
         req.body = postData
 
         // 处理 blog 路由
-        const blogData = handleBlogRouter(req, res)
-        if (blogData) {
-            res.end(
-                JSON.stringify(blogData)
-            )
+        // const blogData = handleBlogRouter(req, res)
+        // if (blogData) {
+        //     res.end(
+        //         JSON.stringify(blogData)
+        //     )
+        //     return
+        // }
+
+        const blogResult = handleBlogRouter(req, res)
+        if (blogResult) {
+            blogResult.then(blogData => {
+                res.end(
+                    JSON.stringify(blogData)
+                )
+            })
             return
         }
 
-        // 处理 blog 路由
-        const userData = handleUserRouter(req, res)
-        if (userData) {
-            res.end(
-                JSON.stringify(userData)
-            )
+        // 处理 登录 路由
+        const userResult = handleUserRouter(req, res)
+        if (userResult) {
+            userResult.then(userData => {
+                res.end(
+                    JSON.stringify(userData)
+                )
+            })
             return
         }
 
@@ -66,9 +78,6 @@ const serverHandle = (req, res) => {
         res.write("404 Not Found\n")
         res.end()
     })
-
-
-
 }
 
 module.exports = serverHandle
