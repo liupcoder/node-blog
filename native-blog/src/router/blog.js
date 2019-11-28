@@ -8,6 +8,13 @@ const {
 
 const { SuccessModel, ErrorModel } = require('../model/resModel')
 
+// 统一的登录验证函数
+const loginCheck = (req) => {
+    if (!req.session.username) {
+        return Promise.resolve(new ErrorModel('登录失败'))
+    }
+}
+
 const handleBlogRouter = (req, res) => {
     const method = req.method // GET POST
     const url = req.url
@@ -16,8 +23,18 @@ const handleBlogRouter = (req, res) => {
 
     // 获取博客列表
     if (method === 'GET' && path === '/api/blog/list') {
-        const author = req.query.author || ''
+        let author = req.query.author || ''
         const keyword = req.query.keyword || ''
+        if (req.query.isadmin) {
+            // 管理员界面
+            const loginCheckResult = loginCheck(req)
+            if (loginCheckResult) {
+                // 未登录
+                return loginCheckResult
+            }
+            // 强制查询自己的博客
+            author = req.session.username
+        }
         const result = getList(author, keyword)
         return result.then(listData => {
             return new SuccessModel(listData);
@@ -35,8 +52,11 @@ const handleBlogRouter = (req, res) => {
     // 新建博客
     if (method === 'POST' && path === '/api/blog/new') {
 
-        const author = 'zhangsan' // 假数据, 待登录开发时再改
-        req.body.author = author
+        const loginCheckResult = loginCheck(req)
+        if (loginCheckResult) {
+            return loginCheckResult
+        }
+        req.body.author = req.session.username
         const result = newBlog(req.body)
         return result.then(data => {
             return new SuccessModel(data)
@@ -46,8 +66,11 @@ const handleBlogRouter = (req, res) => {
 
     // 更新博客
     if (method === 'POST' && path === '/api/blog/update') {
+        const loginCheckResult = loginCheck(req)
+        if (loginCheckResult) {
+            return loginCheckResult
+        }
         const result = updateBlog(id, req.body)
-
         return result.then(val => {
             if (val) {
                 return new SuccessModel()
@@ -56,13 +79,15 @@ const handleBlogRouter = (req, res) => {
                 return new ErrorModel('更新博客失败')
             }
         })
-
-
     }
 
     // 删除博客
     if (method === 'POST' && path === '/api/blog/del') {
-        const author = 'zhangsan' // 假数据, 待登录开发时再改
+        const loginCheckResult = loginCheck(req)
+        if (loginCheckResult) {
+            return loginCheckResult
+        }
+        const author = req.session.username
         const result = delBlog(id, author)
         return result.then(val => {
             if (val) {
