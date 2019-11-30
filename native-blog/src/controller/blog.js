@@ -1,3 +1,4 @@
+const xss = require('xss')
 const { exec } = require('../db/mysql')
 
 const getList = (author, keyword) => {
@@ -43,7 +44,7 @@ const newBlog = (blogData = {}) => {
 }
 
 const updateBlog = (id, blogData = {}) => {
-    const title = blogData.title
+    const title = xss(blogData.title)
     const content = blogData.content
 
     let sql = `update blogs set title='${title}', content='${content}' where id='${id}'`

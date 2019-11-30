@@ -1,5 +1,6 @@
 const querystring = require('querystring')
 const { get, set } = require('./src/db/redis')
+const { access } = require('./src/utils/log')
 const handleBlogRouter = require('./src/router/blog')
 const handleUserRouter = require('./src/router/user')
 
@@ -40,6 +41,10 @@ const getPostData = (req) => {
 }
 
 const serverHandle = (req, res) => {
+
+    // 记录 access log
+    access(`${req.method} -- ${req.url} -- ${req.headers['user-agent']} -- ${Date.now()}`)
+
     // 设置返回格式 JSON
     res.setHeader('Content-type', 'application/json')
 
@@ -91,10 +96,10 @@ const serverHandle = (req, res) => {
             // 初始化 redis 中 session 值
             set(req.sessionId, {})
             req.session = {}
-        } else {            
+        } else {
             req.session = sessionData
         }
-         // 处理 post data
+        // 处理 post data
         return getPostData(req)
     }).then(postData => {
         req.body = postData
@@ -107,10 +112,8 @@ const serverHandle = (req, res) => {
         //     )
         //     return
         // }
-        console.log(url);
-        
+
         const blogResult = handleBlogRouter(req, res)
-        console.log("blogResult", blogResult)
         if (blogResult) {
             blogResult.then(blogData => {
                 if (needSetCookie) {
